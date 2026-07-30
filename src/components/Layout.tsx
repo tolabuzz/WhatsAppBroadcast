@@ -1,5 +1,6 @@
-import { NavLink, Outlet } from "react-router-dom";
-import { Home, Users, Folder, MessageSquare, Send } from "./ui/icons";
+import { NavLink, Outlet, useNavigate } from "react-router-dom";
+import { Home, Users, Folder, MessageSquare, Send, LogOut } from "./ui/icons";
+import { useAccount } from "../context/AccountContext";
 
 const NAV_ITEMS = [
   { to: "/", label: "Home", icon: Home, end: true },
@@ -10,6 +11,14 @@ const NAV_ITEMS = [
 ];
 
 export function Layout() {
+  const { email, logout } = useAccount();
+  const navigate = useNavigate();
+
+  function handleLogout() {
+    logout();
+    navigate("/login", { replace: true });
+  }
+
   return (
     <div className="min-h-full flex flex-col sm:flex-row">
       <aside className="hidden sm:flex sm:w-60 sm:flex-col sm:border-r sm:border-black/5 sm:bg-white sm:py-6 sm:px-4 sm:gap-1">
@@ -34,12 +43,37 @@ export function Layout() {
             {item.label}
           </NavLink>
         ))}
+
+        <div className="mt-auto flex items-center gap-2 px-2 pt-4 border-t border-black/5">
+          <span className="text-xs text-ink-muted truncate flex-1" title={email ?? ""}>
+            {email}
+          </span>
+          <button
+            onClick={handleLogout}
+            className="p-1.5 rounded-lg hover:bg-black/5 text-ink-muted shrink-0"
+            aria-label="Log out"
+            title="Log out"
+          >
+            <LogOut size={16} />
+          </button>
+        </div>
       </aside>
 
       <div className="flex-1 flex flex-col min-w-0">
-        <main className="flex-1 pb-20 sm:pb-0">
+        <main className="flex-1 pb-32 sm:pb-0">
           <Outlet />
         </main>
+
+        <div className="sm:hidden fixed bottom-16 left-0 right-0 z-40 bg-surface-muted/95 backdrop-blur border-t border-black/5 px-4 py-1.5 flex items-center gap-2">
+          <span className="text-[11px] text-ink-muted truncate flex-1">{email}</span>
+          <button
+            onClick={handleLogout}
+            className="flex items-center gap-1 text-[11px] font-medium text-ink-muted px-2 py-1 rounded-lg hover:bg-black/5"
+          >
+            <LogOut size={13} />
+            Log out
+          </button>
+        </div>
 
         <nav className="sm:hidden fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-black/5 safe-bottom">
           <div className="flex items-stretch">

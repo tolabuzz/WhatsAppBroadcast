@@ -1,5 +1,5 @@
-import { db } from "./db";
-import { newId } from "../lib/id";
+import { apiFetch } from "../lib/apiClient";
+import { queryClient } from "../lib/queryClient";
 import type { Broadcast, BroadcastRecipient, BroadcastStatus, Contact } from "../types";
 
 export function recipientFromContact(contact: Contact): BroadcastRecipient {
@@ -19,49 +19,39 @@ export interface BroadcastInput {
   sourceGroupIds?: string[];
 }
 
+function invalidateBroadcasts() {
+  queryClient.invalidateQueries({ queryKey: ["broadcasts"] });
+  queryClient.invalidateQueries({ queryKey: ["broadcast"] });
+}
+
 export async function createBroadcast(
   input: BroadcastInput,
   status: BroadcastStatus = "draft",
 ): Promise<Broadcast> {
-  const now = Date.now();
-  const broadcast: Broadcast = {
-    id: newId(),
-    title: input.title.trim(),
-    messageBody: input.messageBody,
-    status,
-    recipients: input.recipients,
-    currentIndex: 0,
-    createdAt: now,
-    updatedAt: now,
-    sourceGroupIds: input.sourceGroupIds,
-  };
-  await db.broadcasts.add(broadcast);
+  const broadcast = await apiFetch<Broadcast>("/broadcasts", {
+    method: "POST",
+    body: JSON.stringify({ ...input, status }),
+  });
+  invalidateBroadcasts();
   return broadcast;
 }
 
 export async function updateBroadcast(id: string, patch: Partial<Broadcast>): Promise<void> {
-  await db.broadcasts.update(id, { ...patch, updatedAt: Date.now() });
+  await apiFetch<Broadcast>(`/broadcasts/${id}`, {
+    method: "PATCH",
+    body: JSON.stringify(patch),
+  });
+  invalidateBroadcasts();
 }
 
 export async function deleteBroadcast(id: string): Promise<void> {
-  await db.broadcasts.delete(id);
+  await apiFetch<void>(`/broadcasts/${id}`, { method: "DELETE" });
+  invalidateBroadcasts();
 }
 
 export async function duplicateBroadcast(id: string): Promise<Broadcast | undefined> {
-  const original = await db.broadcasts.get(id);
-  if (!original) return undefined;
-  const now = Date.now();
-  const copy: Broadcast = {
-    ...original,
-    id: newId(),
-    title: `${original.title} (Copy)`,
-    status: "draft",
-    currentIndex: 0,
-    recipients: original.recipients.map((r) => ({ ...r, status: "pending", sentAt: undefined })),
-    createdAt: now,
-    updatedAt: now,
-  };
-  await db.broadcasts.add(copy);
+  const copy = await apiFetch<Broadcast>(`/broadcasts/${id}/duplicate`, { method: "POST" });
+  invalidateBroadcasts();
   return copy;
 }
 
@@ -70,21 +60,11 @@ export async function markRecipientStatus(
   index: number,
   status: BroadcastRecipient["status"],
 ): Promise<void> {
-  const broadcast = await db.broadcasts.get(broadcastId);
-  if (!broadcast) return;
-  const recipients = [...broadcast.recipients];
-  recipients[index] = {
-    ...recipients[index],
-    status,
-    sentAt: status === "sent" ? Date.now() : recipients[index].sentAt,
-  };
-  const allDone = recipients.every((r) => r.status !== "pending");
-  await db.broadcasts.update(broadcastId, {
-    recipients,
-    currentIndex: Math.min(index + 1, recipients.length),
-    status: allDone ? "completed" : "active",
-    updatedAt: Date.now(),
+  await apiFetch<Broadcast>(`/broadcasts/${broadcastId}/recipient`, {
+    method: "POST",
+    body: JSON.stringify({ index, status }),
   });
+  invalidateBroadcasts();
 }
 
 export function broadcastStats(broadcast: Broadcast) {

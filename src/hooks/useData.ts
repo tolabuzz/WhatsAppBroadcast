@@ -1,39 +1,66 @@
-import { useLiveQuery } from "dexie-react-hooks";
-import { db } from "../db/db";
+import { useQuery } from "@tanstack/react-query";
+import { useAccount } from "../context/AccountContext";
+import { apiFetch } from "../lib/apiClient";
+import type { Broadcast, Contact, Group, MessageTemplate } from "../types";
 
 export function useContacts() {
-  return useLiveQuery(() => db.contacts.orderBy("firstName").toArray(), [], []);
+  const { email } = useAccount();
+  const { data } = useQuery({
+    queryKey: ["contacts", email],
+    queryFn: () => apiFetch<Contact[]>("/contacts"),
+    enabled: !!email,
+  });
+  return data;
 }
 
 export function useGroups() {
-  return useLiveQuery(() => db.groups.orderBy("name").toArray(), [], []);
+  const { email } = useAccount();
+  const { data } = useQuery({
+    queryKey: ["groups", email],
+    queryFn: () => apiFetch<Group[]>("/groups"),
+    enabled: !!email,
+  });
+  return data;
 }
 
 export function useTemplates() {
-  return useLiveQuery(() => db.templates.orderBy("updatedAt").reverse().toArray(), [], []);
+  const { email } = useAccount();
+  const { data } = useQuery({
+    queryKey: ["templates", email],
+    queryFn: () => apiFetch<MessageTemplate[]>("/templates"),
+    enabled: !!email,
+  });
+  return data;
 }
 
 export function useBroadcasts() {
-  return useLiveQuery(() => db.broadcasts.orderBy("updatedAt").reverse().toArray(), [], []);
+  const { email } = useAccount();
+  const { data } = useQuery({
+    queryKey: ["broadcasts", email],
+    queryFn: () => apiFetch<Broadcast[]>("/broadcasts"),
+    enabled: !!email,
+  });
+  return data;
 }
 
 export function useBroadcast(id: string | undefined) {
-  return useLiveQuery(async () => {
-    if (!id) return undefined;
-    return db.broadcasts.get(id);
-  }, [id]);
+  const { email } = useAccount();
+  const { data } = useQuery({
+    queryKey: ["broadcast", email, id],
+    queryFn: () => apiFetch<Broadcast>(`/broadcasts/${id}`),
+    enabled: !!email && !!id,
+    refetchInterval: 0,
+  });
+  return data;
 }
 
-export function useContact(id: string | undefined) {
-  return useLiveQuery(async () => {
-    if (!id) return undefined;
-    return db.contacts.get(id);
-  }, [id]);
+export function useGroup(id: string | undefined) {
+  const groups = useGroups();
+  return groups?.find((g) => g.id === id);
 }
 
 export function useContactsInGroup(groupId: string | undefined) {
-  return useLiveQuery(async () => {
-    if (!groupId) return [];
-    return db.contacts.where("groupIds").equals(groupId).toArray();
-  }, [groupId]);
+  const contacts = useContacts();
+  if (!groupId) return [] as Contact[];
+  return (contacts ?? []).filter((c) => c.groupIds.includes(groupId));
 }

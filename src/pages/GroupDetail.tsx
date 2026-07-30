@@ -1,8 +1,6 @@
 import { useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { useContactsInGroup, useContacts } from "../hooks/useData";
-import { db } from "../db/db";
-import { useLiveQuery } from "dexie-react-hooks";
+import { useContactsInGroup, useContacts, useGroup } from "../hooks/useData";
 import { PageHeader } from "../components/ui/PageHeader";
 import { Button } from "../components/ui/Button";
 import { Avatar } from "../components/ui/Avatar";
@@ -19,7 +17,7 @@ export function GroupDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { show } = useToast();
-  const group = useLiveQuery(() => (id ? db.groups.get(id) : undefined), [id]);
+  const group = useGroup(id);
   const members = useContactsInGroup(id);
   const allContacts = useContacts();
 
@@ -125,7 +123,7 @@ export function GroupDetail() {
                   <p className="text-xs text-ink-muted truncate">{formatPhoneDisplay(c.phone)}</p>
                 </div>
                 <button
-                  onClick={() => removeContactFromGroup(c.id, group.id)}
+                  onClick={() => removeContactFromGroup(c, group.id)}
                   className="p-1.5 rounded-full hover:bg-black/10 text-ink-muted shrink-0"
                   aria-label="Remove from group"
                 >
@@ -169,7 +167,7 @@ export function GroupDetail() {
             <button
               key={c.id}
               onClick={async () => {
-                await addContactsToGroup([c.id], group.id);
+                await addContactsToGroup([c.id], group.id, allContacts ?? []);
                 show(`Added ${c.firstName}`, "success");
               }}
               className="flex items-center gap-3 px-2 py-2 rounded-xl hover:bg-black/5 text-left"
