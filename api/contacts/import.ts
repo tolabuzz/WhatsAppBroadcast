@@ -1,7 +1,7 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { v4 as uuidv4 } from "uuid";
-import { sql, toPgTextArray } from "../lib/db";
-import { getOwnerEmail, withErrorHandling } from "../lib/http";
+import { sql, toPgTextArray } from "../_lib/db";
+import { getOwnerEmail, withErrorHandling } from "../_lib/http";
 import { normalizePhone } from "../../src/lib/phone";
 
 interface ImportRow {

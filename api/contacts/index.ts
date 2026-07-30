@@ -1,8 +1,8 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { v4 as uuidv4 } from "uuid";
-import { sql, toPgTextArray } from "../lib/db";
-import { getOwnerEmail, withErrorHandling } from "../lib/http";
-import { contactFromRow } from "../lib/mappers";
+import { sql, toPgTextArray } from "../_lib/db";
+import { getOwnerEmail, withErrorHandling } from "../_lib/http";
+import { contactFromRow } from "../_lib/mappers";
 import { normalizePhone } from "../../src/lib/phone";
 
 async function handler(req: VercelRequest, res: VercelResponse) {

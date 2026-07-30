@@ -1,8 +1,7 @@
-import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { sql } from "./lib/db";
-import { withErrorHandling } from "./lib/http";
+import { sql } from "./db";
 
-async function handler(_req: VercelRequest, res: VercelResponse) {
+/** Idempotent schema setup, safe to run on every request (each statement is IF NOT EXISTS). */
+export async function runMigrations(): Promise<void> {
   await sql`
     CREATE TABLE IF NOT EXISTS contacts (
       id TEXT PRIMARY KEY,
@@ -65,8 +64,4 @@ async function handler(_req: VercelRequest, res: VercelResponse) {
       created_at BIGINT NOT NULL
     );
   `;
-
-  res.status(200).json({ ok: true, message: "Migration complete." });
 }
-
-export default withErrorHandling(handler);

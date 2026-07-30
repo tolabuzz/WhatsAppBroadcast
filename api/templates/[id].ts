@@ -1,7 +1,7 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { sql } from "../lib/db";
-import { getIdParam, getOwnerEmail, withErrorHandling } from "../lib/http";
-import { templateFromRow } from "../lib/mappers";
+import { sql } from "../_lib/db";
+import { getIdParam, getOwnerEmail, withErrorHandling } from "../_lib/http";
+import { templateFromRow } from "../_lib/mappers";
 
 async function handler(req: VercelRequest, res: VercelResponse) {
   const owner = getOwnerEmail(req);
