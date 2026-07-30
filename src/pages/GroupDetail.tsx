@@ -7,7 +7,7 @@ import { Avatar } from "../components/ui/Avatar";
 import { EmptyState } from "../components/ui/EmptyState";
 import { Modal } from "../components/ui/Modal";
 import { Input } from "../components/ui/Input";
-import { Users, Plus, Trash, Send, X } from "../components/ui/icons";
+import { Users, Plus, Trash, Send, X, Check } from "../components/ui/icons";
 import { renameGroup, deleteGroup } from "../db/groups";
 import { addContactsToGroup, removeContactFromGroup } from "../db/contacts";
 import { formatPhoneDisplay } from "../lib/phone";
@@ -25,6 +25,8 @@ export function GroupDetail() {
   const [newName, setNewName] = useState("");
   const [showAddExisting, setShowAddExisting] = useState(false);
   const [query, setQuery] = useState("");
+  const [selectedToAdd, setSelectedToAdd] = useState<Set<string>>(new Set());
+  const [adding, setAdding] = useState(false);
 
   const nonMembers = useMemo(() => {
     const memberIds = new Set((members ?? []).map((m) => m.id));
@@ -59,6 +61,29 @@ export function GroupDetail() {
     show("Group renamed", "success");
   }
 
+  function toggleSelectedToAdd(id: string) {
+    setSelectedToAdd((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  async function handleAddSelected() {
+    if (selectedToAdd.size === 0) return;
+    setAdding(true);
+    try {
+      const ids = Array.from(selectedToAdd);
+      await addContactsToGroup(ids, group!.id, allContacts ?? []);
+      show(`Added ${ids.length} contact${ids.length === 1 ? "" : "s"}`, "success");
+      setShowAddExisting(false);
+      setSelectedToAdd(new Set());
+    } finally {
+      setAdding(false);
+    }
+  }
+
   return (
     <div>
       <PageHeader
@@ -81,6 +106,7 @@ export function GroupDetail() {
             onClick={() => {
               setShowAddExisting(true);
               setQuery("");
+              setSelectedToAdd(new Set());
             }}
           >
             Add contacts
@@ -151,7 +177,21 @@ export function GroupDetail() {
         <Input label="Group name" value={newName} onChange={(e) => setNewName(e.target.value)} autoFocus />
       </Modal>
 
-      <Modal open={showAddExisting} onClose={() => setShowAddExisting(false)} title="Add Contacts to Group">
+      <Modal
+        open={showAddExisting}
+        onClose={() => setShowAddExisting(false)}
+        title="Add Contacts to Group"
+        footer={
+          <>
+            <Button variant="outline" onClick={() => setShowAddExisting(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleAddSelected} disabled={selectedToAdd.size === 0 || adding}>
+              {adding ? "Adding..." : `Add${selectedToAdd.size > 0 ? ` (${selectedToAdd.size})` : ""}`}
+            </Button>
+          </>
+        }
+      >
         <input
           value={query}
           onChange={(e) => setQuery(e.target.value)}
@@ -163,22 +203,30 @@ export function GroupDetail() {
           {filteredNonMembers.length === 0 && (
             <p className="text-sm text-ink-muted text-center py-6">No matching contacts.</p>
           )}
-          {filteredNonMembers.map((c) => (
-            <button
-              key={c.id}
-              onClick={async () => {
-                await addContactsToGroup([c.id], group.id, allContacts ?? []);
-                show(`Added ${c.firstName}`, "success");
-              }}
-              className="flex items-center gap-3 px-2 py-2 rounded-xl hover:bg-black/5 text-left"
-            >
-              <Avatar name={`${c.firstName} ${c.lastName}`} size={32} />
-              <span className="text-sm text-ink flex-1 truncate">
-                {c.firstName} {c.lastName}
-              </span>
-              <Plus size={16} className="text-brand-dark shrink-0" />
-            </button>
-          ))}
+          {filteredNonMembers.map((c) => {
+            const isSelected = selectedToAdd.has(c.id);
+            return (
+              <button
+                key={c.id}
+                onClick={() => toggleSelectedToAdd(c.id)}
+                className={`flex items-center gap-3 px-2 py-2 rounded-xl hover:bg-black/5 text-left ${
+                  isSelected ? "bg-brand-pale/40" : ""
+                }`}
+              >
+                <span
+                  className={`w-5 h-5 rounded-full flex items-center justify-center shrink-0 border ${
+                    isSelected ? "bg-brand-dark border-brand-dark text-white" : "border-black/20 text-transparent"
+                  }`}
+                >
+                  <Check size={13} />
+                </span>
+                <Avatar name={`${c.firstName} ${c.lastName}`} size={32} />
+                <span className="text-sm text-ink flex-1 truncate">
+                  {c.firstName} {c.lastName}
+                </span>
+              </button>
+            );
+          })}
         </div>
       </Modal>
     </div>
