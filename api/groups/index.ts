@@ -1,8 +1,8 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { v4 as uuidv4 } from "uuid";
-import { sql } from "../../server/db";
-import { getOwnerEmail, withErrorHandling } from "../../server/http";
-import { groupFromRow } from "../../server/mappers";
+import { sql } from "../../server/db.js";
+import { getOwnerEmail, withErrorHandling } from "../../server/http.js";
+import { groupFromRow } from "../../server/mappers.js";
 
 const GROUP_COLORS = ["#128C7E", "#25D366", "#075E54", "#34B7F1", "#D97706", "#8B5CF6", "#EC4899"];
 

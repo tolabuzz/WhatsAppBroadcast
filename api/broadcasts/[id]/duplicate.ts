@@ -1,8 +1,8 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { v4 as uuidv4 } from "uuid";
-import { sql, toPgTextArray } from "../../../server/db";
-import { getIdParam, getOwnerEmail, withErrorHandling } from "../../../server/http";
-import { broadcastFromRow } from "../../../server/mappers";
+import { sql, toPgTextArray } from "../../../server/db.js";
+import { getIdParam, getOwnerEmail, withErrorHandling } from "../../../server/http.js";
+import { broadcastFromRow } from "../../../server/mappers.js";
 
 interface BroadcastRecipient {
   contactId?: string;

@@ -1,4 +1,4 @@
-import { sql } from "./db";
+import { sql } from "./db.js";
 import { v4 as uuidv4 } from "uuid";
 
 const DEFAULT_GROUPS: Array<{ name: string; color: string }> = [

@@ -1,8 +1,8 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { v4 as uuidv4 } from "uuid";
-import { sql, toPgTextArray } from "../../server/db";
-import { getOwnerEmail, withErrorHandling } from "../../server/http";
-import { normalizePhone } from "../../src/lib/phone";
+import { sql, toPgTextArray } from "../../server/db.js";
+import { getOwnerEmail, withErrorHandling } from "../../server/http.js";
+import { normalizePhone } from "../../src/lib/phone.js";
 
 interface ImportRow {
   firstName: string;

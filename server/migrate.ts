@@ -1,4 +1,4 @@
-import { sql } from "./db";
+import { sql } from "./db.js";
 
 /** Idempotent schema setup, safe to run on every request (each statement is IF NOT EXISTS). */
 export async function runMigrations(): Promise<void> {

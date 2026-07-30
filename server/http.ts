@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { isValidEmail, normalizeEmail } from "./db";
+import { isValidEmail, normalizeEmail } from "./db.js";
 
 export class ApiError extends Error {
   status: number;

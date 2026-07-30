@@ -1,8 +1,8 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { sql, toPgTextArray } from "../../server/db";
-import { getIdParam, getOwnerEmail, withErrorHandling } from "../../server/http";
-import { contactFromRow } from "../../server/mappers";
-import { normalizePhone } from "../../src/lib/phone";
+import { sql, toPgTextArray } from "../../server/db.js";
+import { getIdParam, getOwnerEmail, withErrorHandling } from "../../server/http.js";
+import { contactFromRow } from "../../server/mappers.js";
+import { normalizePhone } from "../../src/lib/phone.js";
 
 async function handler(req: VercelRequest, res: VercelResponse) {
   const owner = getOwnerEmail(req);

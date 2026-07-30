@@ -1,7 +1,7 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { getOwnerEmail, withErrorHandling } from "../../server/http";
-import { runMigrations } from "../../server/migrate";
-import { ensureAccountSeeded } from "../../server/seed";
+import { getOwnerEmail, withErrorHandling } from "../../server/http.js";
+import { runMigrations } from "../../server/migrate.js";
+import { ensureAccountSeeded } from "../../server/seed.js";
 
 async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== "POST") {
