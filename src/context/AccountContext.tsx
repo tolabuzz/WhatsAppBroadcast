@@ -1,4 +1,5 @@
-import { createContext, useContext, useState, type ReactNode } from "react";
+import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
+import { apiFetch } from "../lib/apiClient";
 
 const STORAGE_KEY = "broadcast_account_email";
 
@@ -12,6 +13,12 @@ const AccountContext = createContext<AccountContextValue | null>(null);
 
 export function AccountProvider({ children }: { children: ReactNode }) {
   const [email, setEmail] = useState<string | null>(() => localStorage.getItem(STORAGE_KEY));
+
+  useEffect(() => {
+    if (email) {
+      apiFetch("/account/init", { method: "POST" }).catch(() => {});
+    }
+  }, [email]);
 
   function login(newEmail: string) {
     const normalized = newEmail.trim().toLowerCase();
