@@ -1,7 +1,7 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { sql } from "../../_lib/db";
-import { getIdParam, getOwnerEmail, withErrorHandling } from "../../_lib/http";
-import { broadcastFromRow } from "../../_lib/mappers";
+import { sql } from "../../../server/db";
+import { getIdParam, getOwnerEmail, withErrorHandling } from "../../../server/http";
+import { broadcastFromRow } from "../../../server/mappers";
 
 interface BroadcastRecipient {
   contactId?: string;

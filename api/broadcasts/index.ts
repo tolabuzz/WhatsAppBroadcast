@@ -1,8 +1,8 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { v4 as uuidv4 } from "uuid";
-import { sql, toPgTextArray } from "../_lib/db";
-import { getOwnerEmail, withErrorHandling } from "../_lib/http";
-import { broadcastFromRow } from "../_lib/mappers";
+import { sql, toPgTextArray } from "../../server/db";
+import { getOwnerEmail, withErrorHandling } from "../../server/http";
+import { broadcastFromRow } from "../../server/mappers";
 
 interface BroadcastRecipient {
   contactId?: string;

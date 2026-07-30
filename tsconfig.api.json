@@ -16,5 +16,5 @@
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true
   },
-  "include": ["api", "src/lib/phone.ts"]
+  "include": ["api", "server", "src/lib/phone.ts"]
 }
