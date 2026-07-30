@@ -44,6 +44,11 @@ npm run build    # type-check and build for production
 npm run preview  # preview the production build
 ```
 
+## Deployment
+
+Deployed via [Vercel](https://vercel.com), tracking the `main` branch for
+production. Pushes to other branches produce preview deployments.
+
 ## Notes & scope
 
 This is a client-only MVP: contacts, groups, templates, and broadcasts are
