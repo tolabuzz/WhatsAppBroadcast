@@ -16,6 +16,7 @@ async function handler(req: VercelRequest, res: VercelResponse) {
       email?: string;
       notes?: string;
       groupIds?: string[];
+      customData?: Record<string, string>;
     };
     const now = Date.now();
     const firstName = body.firstName !== undefined ? body.firstName.trim() : null;
@@ -26,6 +27,7 @@ async function handler(req: VercelRequest, res: VercelResponse) {
     const notesProvided = body.notes !== undefined;
     const notesValue = body.notes?.trim() || null;
     const groupIdsLiteral = body.groupIds !== undefined ? toPgTextArray(body.groupIds) : null;
+    const customDataLiteral = body.customData !== undefined ? JSON.stringify(body.customData) : null;
 
     const { rows } = await sql`
       UPDATE contacts SET
@@ -35,6 +37,7 @@ async function handler(req: VercelRequest, res: VercelResponse) {
         email = CASE WHEN ${emailProvided} THEN ${emailValue} ELSE email END,
         notes = CASE WHEN ${notesProvided} THEN ${notesValue} ELSE notes END,
         group_ids = COALESCE(${groupIdsLiteral}::text[], group_ids),
+        custom_data = COALESCE(${customDataLiteral}::jsonb, custom_data),
         updated_at = ${now}
       WHERE id = ${id} AND owner_email = ${owner}
       RETURNING *

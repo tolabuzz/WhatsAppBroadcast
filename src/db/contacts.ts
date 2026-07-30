@@ -9,6 +9,7 @@ export interface ContactInput {
   email?: string;
   notes?: string;
   groupIds?: string[];
+  customData?: Record<string, string>;
 }
 
 function invalidateContacts() {
@@ -34,6 +35,11 @@ export async function updateContact(id: string, input: Partial<ContactInput>): P
 
 export async function deleteContact(id: string): Promise<void> {
   await apiFetch<void>(`/contacts/${id}`, { method: "DELETE" });
+  invalidateContacts();
+}
+
+export async function deleteContacts(ids: string[]): Promise<void> {
+  await Promise.all(ids.map((id) => apiFetch<void>(`/contacts/${id}`, { method: "DELETE" })));
   invalidateContacts();
 }
 

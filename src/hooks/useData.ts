@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useAccount } from "../context/AccountContext";
 import { apiFetch } from "../lib/apiClient";
-import type { Broadcast, Contact, Group, MessageTemplate } from "../types";
+import type { Broadcast, Contact, CustomField, Group, MessageTemplate } from "../types";
 
 export function useContacts() {
   const { email } = useAccount();
@@ -50,6 +50,16 @@ export function useBroadcast(id: string | undefined) {
     queryFn: () => apiFetch<Broadcast>(`/broadcasts/${id}`),
     enabled: !!email && !!id,
     refetchInterval: 0,
+  });
+  return data;
+}
+
+export function useCustomFields() {
+  const { email } = useAccount();
+  const { data } = useQuery({
+    queryKey: ["customFields", email],
+    queryFn: () => apiFetch<CustomField[]>("/custom-fields"),
+    enabled: !!email,
   });
   return data;
 }

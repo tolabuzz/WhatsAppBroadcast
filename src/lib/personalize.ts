@@ -1,6 +1,7 @@
 export interface PersonalizationFields {
   firstName: string;
   lastName: string;
+  customData?: Record<string, string>;
 }
 
 const PLACEHOLDER_PATTERN = /\{\{\s*(\w+)\s*\}\}/g;
@@ -8,6 +9,7 @@ const PLACEHOLDER_PATTERN = /\{\{\s*(\w+)\s*\}\}/g;
 export function buildFieldMap(fields: PersonalizationFields): Record<string, string> {
   const fullName = [fields.firstName, fields.lastName].filter(Boolean).join(" ").trim();
   return {
+    ...fields.customData,
     FirstName: fields.firstName || "",
     LastName: fields.lastName || "",
     FullName: fullName || fields.firstName || "",

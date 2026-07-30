@@ -7,8 +7,18 @@ export function contactFromRow(row: Record<string, unknown>) {
     email: (row.email as string | null) ?? undefined,
     notes: (row.notes as string | null) ?? undefined,
     groupIds: (row.group_ids as string[]) ?? [],
+    customData: (row.custom_data as Record<string, string> | null) ?? {},
     createdAt: Number(row.created_at),
     updatedAt: Number(row.updated_at),
+  };
+}
+
+export function customFieldFromRow(row: Record<string, unknown>) {
+  return {
+    id: row.id as string,
+    key: row.key as string,
+    label: row.label as string,
+    createdAt: Number(row.created_at),
   };
 }
 

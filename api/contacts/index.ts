@@ -24,14 +24,16 @@ async function handler(req: VercelRequest, res: VercelResponse) {
       email?: string;
       notes?: string;
       groupIds?: string[];
+      customData?: Record<string, string>;
     };
     const now = Date.now();
     const id = uuidv4();
     const phone = normalizePhone(body.phone);
     const { rows } = await sql`
-      INSERT INTO contacts (id, owner_email, first_name, last_name, phone, email, notes, group_ids, created_at, updated_at)
+      INSERT INTO contacts (id, owner_email, first_name, last_name, phone, email, notes, group_ids, custom_data, created_at, updated_at)
       VALUES (${id}, ${owner}, ${body.firstName.trim()}, ${body.lastName?.trim() ?? ""}, ${phone},
-              ${body.email?.trim() || null}, ${body.notes?.trim() || null}, ${toPgTextArray(body.groupIds ?? [])}::text[], ${now}, ${now})
+              ${body.email?.trim() || null}, ${body.notes?.trim() || null}, ${toPgTextArray(body.groupIds ?? [])}::text[],
+              ${JSON.stringify(body.customData ?? {})}::jsonb, ${now}, ${now})
       RETURNING *
     `;
     res.status(201).json(contactFromRow(rows[0]));

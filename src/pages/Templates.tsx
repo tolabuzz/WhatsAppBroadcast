@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useTemplates } from "../hooks/useData";
+import { useTemplates, useCustomFields } from "../hooks/useData";
 import { PageHeader } from "../components/ui/PageHeader";
 import { Button } from "../components/ui/Button";
 import { Card } from "../components/ui/Card";
@@ -28,8 +28,10 @@ const PLACEHOLDER_CHIPS = ["{{FirstName}}", "{{LastName}}", "{{FullName}}"];
 
 export function Templates() {
   const templates = useTemplates();
+  const customFields = useCustomFields();
   const navigate = useNavigate();
   const { show } = useToast();
+  const placeholderChips = [...PLACEHOLDER_CHIPS, ...(customFields ?? []).map((f) => `{{${f.key}}}`)];
 
   const [editing, setEditing] = useState<MessageTemplate | null>(null);
   const [showForm, setShowForm] = useState(false);
@@ -176,7 +178,7 @@ export function Templates() {
               <Sparkles size={13} /> Insert placeholder
             </span>
             <div className="flex flex-wrap gap-2">
-              {PLACEHOLDER_CHIPS.map((p) => (
+              {placeholderChips.map((p) => (
                 <button
                   key={p}
                   type="button"

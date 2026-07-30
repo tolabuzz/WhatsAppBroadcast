@@ -6,8 +6,16 @@ export interface Contact {
   email?: string;
   notes?: string;
   groupIds: string[];
+  customData?: Record<string, string>;
   createdAt: number;
   updatedAt: number;
+}
+
+export interface CustomField {
+  id: string;
+  key: string;
+  label: string;
+  createdAt: number;
 }
 
 export interface Group {
@@ -44,6 +52,7 @@ export interface BroadcastRecipient {
   phone: string;
   status: RecipientStatus;
   sentAt?: number;
+  customData?: Record<string, string>;
 }
 
 export type BroadcastStatus = "draft" | "active" | "completed" | "archived";

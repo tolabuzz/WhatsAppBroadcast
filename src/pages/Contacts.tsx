@@ -7,13 +7,16 @@ import { EmptyState } from "../components/ui/EmptyState";
 import { ContactFormModal } from "../components/ContactFormModal";
 import { ImportContactsModal } from "../components/ImportContactsModal";
 import { AddToGroupModal } from "../components/AddToGroupModal";
-import { Search, Plus, Upload, Users, CheckSquare, Check, X } from "../components/ui/icons";
+import { Search, Plus, Upload, Users, CheckSquare, Check, X, Trash } from "../components/ui/icons";
 import { formatPhoneDisplay } from "../lib/phone";
+import { deleteContacts } from "../db/contacts";
+import { useToast } from "../components/ui/Toast";
 import type { Contact } from "../types";
 
 export function Contacts() {
   const contacts = useContacts();
   const groups = useGroups();
+  const { show } = useToast();
   const [query, setQuery] = useState("");
   const [groupFilter, setGroupFilter] = useState<string | null>(null);
   const [editingContact, setEditingContact] = useState<Contact | null>(null);
@@ -22,6 +25,7 @@ export function Contacts() {
   const [selectMode, setSelectMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [showAddToGroup, setShowAddToGroup] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   const filtered = useMemo(() => {
     if (!contacts) return [];
@@ -58,6 +62,38 @@ export function Contacts() {
       toggleSelected(c.id);
     } else {
       setEditingContact(c);
+    }
+  }
+
+  const allFilteredSelected = filtered.length > 0 && filtered.every((c) => selectedIds.has(c.id));
+
+  function toggleSelectAll() {
+    if (allFilteredSelected) {
+      setSelectedIds((prev) => {
+        const next = new Set(prev);
+        for (const c of filtered) next.delete(c.id);
+        return next;
+      });
+    } else {
+      setSelectedIds((prev) => {
+        const next = new Set(prev);
+        for (const c of filtered) next.add(c.id);
+        return next;
+      });
+    }
+  }
+
+  async function handleDeleteSelected() {
+    const count = selectedIds.size;
+    if (count === 0) return;
+    if (!confirm(`Delete ${count} contact${count === 1 ? "" : "s"}? This cannot be undone.`)) return;
+    setDeleting(true);
+    try {
+      await deleteContacts(Array.from(selectedIds));
+      show(`Deleted ${count} contact${count === 1 ? "" : "s"}`, "success");
+      exitSelectMode();
+    } finally {
+      setDeleting(false);
     }
   }
 
@@ -123,6 +159,22 @@ export function Contacts() {
               </button>
             ))}
           </div>
+        )}
+
+        {selectMode && filtered.length > 0 && (
+          <button
+            onClick={toggleSelectAll}
+            className="flex items-center gap-2 px-2 py-1.5 mb-2 text-xs font-medium text-brand-dark hover:bg-black/5 rounded-lg w-fit"
+          >
+            <span
+              className={`w-4 h-4 rounded flex items-center justify-center shrink-0 border ${
+                allFilteredSelected ? "bg-brand-dark border-brand-dark text-white" : "border-black/20 text-transparent"
+              }`}
+            >
+              <Check size={11} />
+            </span>
+            {allFilteredSelected ? "Deselect all" : `Select all (${filtered.length})`}
+          </button>
         )}
 
         {contacts && contacts.length === 0 ? (
@@ -196,7 +248,16 @@ export function Contacts() {
       </div>
 
       {selectMode && (
-        <div className="fixed bottom-16 sm:bottom-0 left-0 right-0 sm:left-60 bg-white border-t border-black/5 px-4 sm:px-6 py-3 flex justify-end safe-bottom">
+        <div className="fixed bottom-16 sm:bottom-0 left-0 right-0 sm:left-60 bg-white border-t border-black/5 px-4 sm:px-6 py-3 flex justify-end gap-2 safe-bottom">
+          <Button
+            variant="outline"
+            icon={<Trash size={15} />}
+            disabled={selectedIds.size === 0 || deleting}
+            onClick={handleDeleteSelected}
+            className="text-danger"
+          >
+            {deleting ? "Deleting..." : "Delete"}
+          </Button>
           <Button
             icon={<Users size={15} />}
             disabled={selectedIds.size === 0}

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { useContacts, useGroups, useTemplates } from "../hooks/useData";
+import { useContacts, useGroups, useTemplates, useCustomFields } from "../hooks/useData";
 import { PageHeader } from "../components/ui/PageHeader";
 import { Button } from "../components/ui/Button";
 import { Card } from "../components/ui/Card";
@@ -36,6 +36,8 @@ export function BroadcastNew() {
   const contacts = useContacts();
   const groups = useGroups();
   const templates = useTemplates();
+  const customFields = useCustomFields();
+  const placeholderChips = [...PLACEHOLDER_CHIPS, ...(customFields ?? []).map((f) => `{{${f.key}}}`)];
 
   const [step, setStep] = useState<Step>(1);
   const [title, setTitle] = useState("");
@@ -311,7 +313,7 @@ export function BroadcastNew() {
                 <Sparkles size={13} /> Insert placeholder
               </span>
               <div className="flex flex-wrap gap-2">
-                {PLACEHOLDER_CHIPS.map((p) => (
+                {placeholderChips.map((p) => (
                   <button
                     key={p}
                     type="button"

@@ -9,6 +9,7 @@ export function recipientFromContact(contact: Contact): BroadcastRecipient {
     lastName: contact.lastName,
     phone: contact.phone,
     status: "pending",
+    customData: contact.customData,
   };
 }
 
@@ -50,7 +51,7 @@ export async function deleteBroadcast(id: string): Promise<void> {
 }
 
 export async function duplicateBroadcast(id: string): Promise<Broadcast | undefined> {
-  const copy = await apiFetch<Broadcast>(`/broadcasts/${id}/duplicate`, { method: "POST" });
+  const copy = await apiFetch<Broadcast>(`/broadcasts/${id}?action=duplicate`, { method: "POST" });
   invalidateBroadcasts();
   return copy;
 }
@@ -60,7 +61,7 @@ export async function markRecipientStatus(
   index: number,
   status: BroadcastRecipient["status"],
 ): Promise<void> {
-  await apiFetch<Broadcast>(`/broadcasts/${broadcastId}/recipient`, {
+  await apiFetch<Broadcast>(`/broadcasts/${broadcastId}?action=recipient`, {
     method: "POST",
     body: JSON.stringify({ index, status }),
   });

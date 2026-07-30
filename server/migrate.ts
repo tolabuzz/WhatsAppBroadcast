@@ -17,6 +17,19 @@ export async function runMigrations(): Promise<void> {
     );
   `;
   await sql`CREATE INDEX IF NOT EXISTS contacts_owner_idx ON contacts(owner_email);`;
+  await sql`ALTER TABLE contacts ADD COLUMN IF NOT EXISTS custom_data JSONB NOT NULL DEFAULT '{}';`;
+
+  await sql`
+    CREATE TABLE IF NOT EXISTS custom_fields (
+      id TEXT PRIMARY KEY,
+      owner_email TEXT NOT NULL,
+      key TEXT NOT NULL,
+      label TEXT NOT NULL,
+      created_at BIGINT NOT NULL
+    );
+  `;
+  await sql`CREATE INDEX IF NOT EXISTS custom_fields_owner_idx ON custom_fields(owner_email);`;
+  await sql`CREATE UNIQUE INDEX IF NOT EXISTS custom_fields_owner_key_idx ON custom_fields(owner_email, key);`;
 
   await sql`
     CREATE TABLE IF NOT EXISTS groups (
