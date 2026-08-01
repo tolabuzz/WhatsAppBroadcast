@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { useContacts, useGroups } from "../hooks/useData";
+import { useContacts, useGroups, useCustomFields } from "../hooks/useData";
 import { PageHeader } from "../components/ui/PageHeader";
 import { Button } from "../components/ui/Button";
 import { Avatar } from "../components/ui/Avatar";
@@ -7,15 +7,17 @@ import { EmptyState } from "../components/ui/EmptyState";
 import { ContactFormModal } from "../components/ContactFormModal";
 import { ImportContactsModal } from "../components/ImportContactsModal";
 import { AddToGroupModal } from "../components/AddToGroupModal";
-import { Search, Plus, Upload, Users, CheckSquare, Check, X, Trash } from "../components/ui/icons";
+import { Search, Plus, Upload, Download, Users, CheckSquare, Check, X, Trash } from "../components/ui/icons";
 import { formatPhoneDisplay } from "../lib/phone";
 import { deleteContacts } from "../db/contacts";
+import { exportContactsToCSV } from "../lib/exportContacts";
 import { useToast } from "../components/ui/Toast";
 import type { Contact } from "../types";
 
 export function Contacts() {
   const contacts = useContacts();
   const groups = useGroups();
+  const customFields = useCustomFields();
   const { show } = useToast();
   const [query, setQuery] = useState("");
   const [groupFilter, setGroupFilter] = useState<string | null>(null);
@@ -81,6 +83,11 @@ export function Contacts() {
         return next;
       });
     }
+  }
+
+  function handleExport() {
+    const activeGroup = groupFilter ? groupsById.get(groupFilter) : undefined;
+    exportContactsToCSV(filtered, customFields ?? [], activeGroup?.name);
   }
 
   async function handleDeleteSelected() {
@@ -159,6 +166,17 @@ export function Contacts() {
               </button>
             ))}
           </div>
+        )}
+
+        {!selectMode && filtered.length > 0 && (
+          <button
+            onClick={handleExport}
+            className="flex items-center gap-1.5 px-2 py-1.5 mb-3 -mt-1 text-xs font-medium text-ink-muted hover:bg-black/5 hover:text-ink rounded-lg w-fit"
+          >
+            <Download size={13} />
+            Export {groupFilter ? groupsById.get(groupFilter)?.name : `all ${filtered.length}`}
+            {groupFilter ? ` (${filtered.length})` : ""}
+          </button>
         )}
 
         {selectMode && filtered.length > 0 && (

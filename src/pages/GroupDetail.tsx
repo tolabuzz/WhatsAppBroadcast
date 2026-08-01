@@ -1,15 +1,16 @@
 import { useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { useContactsInGroup, useContacts, useGroup } from "../hooks/useData";
+import { useContactsInGroup, useContacts, useGroup, useCustomFields } from "../hooks/useData";
 import { PageHeader } from "../components/ui/PageHeader";
 import { Button } from "../components/ui/Button";
 import { Avatar } from "../components/ui/Avatar";
 import { EmptyState } from "../components/ui/EmptyState";
 import { Modal } from "../components/ui/Modal";
 import { Input } from "../components/ui/Input";
-import { Users, Plus, Trash, Send, X, Check } from "../components/ui/icons";
+import { Users, Plus, Trash, Send, X, Check, Download } from "../components/ui/icons";
 import { renameGroup, deleteGroup } from "../db/groups";
 import { addContactsToGroup, removeContactFromGroup } from "../db/contacts";
+import { exportContactsToCSV } from "../lib/exportContacts";
 import { formatPhoneDisplay } from "../lib/phone";
 import { useToast } from "../components/ui/Toast";
 
@@ -20,6 +21,7 @@ export function GroupDetail() {
   const group = useGroup(id);
   const members = useContactsInGroup(id);
   const allContacts = useContacts();
+  const customFields = useCustomFields();
 
   const [showRename, setShowRename] = useState(false);
   const [newName, setNewName] = useState("");
@@ -70,6 +72,10 @@ export function GroupDetail() {
     });
   }
 
+  function handleExport() {
+    exportContactsToCSV(members ?? [], customFields ?? [], group!.name);
+  }
+
   async function handleAddSelected() {
     if (selectedToAdd.size === 0) return;
     setAdding(true);
@@ -111,6 +117,11 @@ export function GroupDetail() {
           >
             Add contacts
           </Button>
+          {members && members.length > 0 && (
+            <Button size="sm" variant="outline" icon={<Download size={14} />} onClick={handleExport}>
+              Export
+            </Button>
+          )}
           <Button
             size="sm"
             variant="outline"
