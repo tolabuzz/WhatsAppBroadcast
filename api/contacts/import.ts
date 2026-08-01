@@ -9,6 +9,7 @@ interface ImportRow {
   lastName?: string;
   phone: string;
   email?: string;
+  customData?: Record<string, string>;
 }
 
 async function handler(req: VercelRequest, res: VercelResponse) {
@@ -18,37 +19,56 @@ async function handler(req: VercelRequest, res: VercelResponse) {
   }
   const owner = getOwnerEmail(req);
   const body = req.body as { rows: ImportRow[]; groupIds?: string[] };
-  const groupIdsLiteral = toPgTextArray(body.groupIds ?? []);
+  const newGroupIds = body.groupIds ?? [];
 
-  const existing = await sql`SELECT phone FROM contacts WHERE owner_email = ${owner}`;
-  const existingPhones = new Set(existing.rows.map((r) => r.phone as string));
+  const existing = await sql`SELECT id, phone, group_ids FROM contacts WHERE owner_email = ${owner}`;
+  const existingByPhone = new Map(
+    existing.rows.map((r) => [r.phone as string, { id: r.id as string, groupIds: (r.group_ids as string[]) ?? [] }]),
+  );
 
   const now = Date.now();
   let created = 0;
+  let updated = 0;
   let skipped = 0;
-  const duplicatePhones: string[] = [];
 
   for (const row of body.rows) {
     const phone = normalizePhone(row.phone);
-    if (!row.firstName || !phone) {
+    const firstName = row.firstName?.trim() ?? "";
+    if (!firstName || !phone) {
       skipped++;
       continue;
     }
-    if (existingPhones.has(phone)) {
-      duplicatePhones.push(phone);
-      skipped++;
-      continue;
+    const lastName = row.lastName?.trim() || null;
+    const email = row.email?.trim() || null;
+    const customData = row.customData ?? {};
+
+    const match = existingByPhone.get(phone);
+    if (match) {
+      const mergedGroupIds = Array.from(new Set([...match.groupIds, ...newGroupIds]));
+      await sql`
+        UPDATE contacts SET
+          first_name = ${firstName},
+          last_name = COALESCE(${lastName}, last_name),
+          email = COALESCE(${email}, email),
+          group_ids = ${toPgTextArray(mergedGroupIds)}::text[],
+          custom_data = custom_data || ${JSON.stringify(customData)}::jsonb,
+          updated_at = ${now}
+        WHERE id = ${match.id}
+      `;
+      updated++;
+    } else {
+      const id = uuidv4();
+      await sql`
+        INSERT INTO contacts (id, owner_email, first_name, last_name, phone, email, group_ids, custom_data, created_at, updated_at)
+        VALUES (${id}, ${owner}, ${firstName}, ${lastName ?? ""}, ${phone}, ${email},
+                ${toPgTextArray(newGroupIds)}::text[], ${JSON.stringify(customData)}::jsonb, ${now}, ${now})
+      `;
+      existingByPhone.set(phone, { id, groupIds: newGroupIds });
+      created++;
     }
-    existingPhones.add(phone);
-    await sql`
-      INSERT INTO contacts (id, owner_email, first_name, last_name, phone, email, group_ids, created_at, updated_at)
-      VALUES (${uuidv4()}, ${owner}, ${row.firstName}, ${row.lastName ?? ""}, ${phone},
-              ${row.email || null}, ${groupIdsLiteral}::text[], ${now}, ${now})
-    `;
-    created++;
   }
 
-  res.status(200).json({ created, skipped, duplicatePhones });
+  res.status(200).json({ created, updated, skipped });
 }
 
 export default withErrorHandling(handler);

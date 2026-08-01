@@ -67,8 +67,8 @@ export async function removeContactFromGroup(contact: Contact, groupId: string):
 
 export interface ImportResult {
   created: number;
+  updated: number;
   skipped: number;
-  duplicatePhones: string[];
 }
 
 export async function importContacts(rows: ImportRow[], groupIds: string[] = []): Promise<ImportResult> {

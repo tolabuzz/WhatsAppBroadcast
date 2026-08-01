@@ -75,4 +75,5 @@ export interface ImportRow {
   phone: string;
   email?: string;
   raw?: Record<string, string>;
+  customData?: Record<string, string>;
 }

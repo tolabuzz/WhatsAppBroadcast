@@ -35,13 +35,15 @@ function splitFullName(fullName: string): { firstName: string; lastName: string 
 export interface ParsedImport {
   rows: ImportRow[];
   headers: string[];
+  /** Headers not consumed by name/phone/email matching, available to map to mail merge tags. */
+  extraHeaders: string[];
   errors: string[];
 }
 
 function rowsFromRecords(records: Record<string, string>[]): ParsedImport {
   const errors: string[] = [];
   if (records.length === 0) {
-    return { rows: [], headers: [], errors: ["The file appears to be empty."] };
+    return { rows: [], headers: [], extraHeaders: [], errors: ["The file appears to be empty."] };
   }
   const headers = Object.keys(records[0]);
   const firstKey = findKey(headers, FIRST_NAME_KEYS);
@@ -56,6 +58,9 @@ function rowsFromRecords(records: Record<string, string>[]): ParsedImport {
   if (!firstKey && !fullKey) {
     errors.push('Could not find a name column. Expected a header like "First Name" or "Name".');
   }
+
+  const usedKeys = new Set([firstKey, lastKey, fullKey, phoneKey, emailKey].filter(Boolean));
+  const extraHeaders = headers.filter((h) => !usedKeys.has(h));
 
   const rows: ImportRow[] = records
     .map((record) => {
@@ -72,7 +77,7 @@ function rowsFromRecords(records: Record<string, string>[]): ParsedImport {
     })
     .filter((r) => r.firstName || r.phone);
 
-  return { rows, headers, errors };
+  return { rows, headers, extraHeaders, errors };
 }
 
 export function parseCSV(file: File): Promise<ParsedImport> {
