@@ -16,6 +16,9 @@ interface ImportContactsModalProps {
   open: boolean;
   onClose: () => void;
   groups: Group[];
+  /** When set, every imported row (new or updated) is locked into this group. */
+  lockGroupId?: string;
+  lockGroupName?: string;
 }
 
 type ColumnMapping = { action: "ignore" | "existing" | "new"; targetKey?: string };
@@ -23,7 +26,7 @@ type ColumnMapping = { action: "ignore" | "existing" | "new"; targetKey?: string
 const IGNORE = "ignore";
 const NEW = "new";
 
-export function ImportContactsModal({ open, onClose, groups }: ImportContactsModalProps) {
+export function ImportContactsModal({ open, onClose, groups, lockGroupId, lockGroupName }: ImportContactsModalProps) {
   const { show } = useToast();
   const customFields = useCustomFields();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -33,6 +36,11 @@ export function ImportContactsModal({ open, onClose, groups }: ImportContactsMod
   const [columnMap, setColumnMap] = useState<Record<string, ColumnMapping>>({});
   const [importing, setImporting] = useState(false);
   const [dragActive, setDragActive] = useState(false);
+
+  useEffect(() => {
+    if (open) setSelectedGroupIds(lockGroupId ? [lockGroupId] : []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, lockGroupId]);
 
   useEffect(() => {
     if (!parsed) return;
@@ -51,7 +59,7 @@ export function ImportContactsModal({ open, onClose, groups }: ImportContactsMod
   function reset() {
     setFile(null);
     setParsed(null);
-    setSelectedGroupIds([]);
+    setSelectedGroupIds(lockGroupId ? [lockGroupId] : []);
     setColumnMap({});
   }
 
@@ -82,6 +90,7 @@ export function ImportContactsModal({ open, onClose, groups }: ImportContactsMod
   }
 
   function toggleGroup(id: string) {
+    if (id === lockGroupId) return;
     setSelectedGroupIds((prev) => (prev.includes(id) ? prev.filter((g) => g !== id) : [...prev, id]));
   }
 
@@ -135,7 +144,7 @@ export function ImportContactsModal({ open, onClose, groups }: ImportContactsMod
     <Modal
       open={open}
       onClose={handleClose}
-      title="Import Contacts"
+      title={lockGroupName ? `Import to ${lockGroupName}` : "Import Contacts"}
       footer={
         parsed && parsed.rows.length > 0 ? (
           <>
@@ -151,7 +160,14 @@ export function ImportContactsModal({ open, onClose, groups }: ImportContactsMod
     >
       <div className="flex flex-col gap-4">
         <p className="text-sm text-ink-muted">
-          Upload a CSV or Excel file with your contacts. Not sure of the format?
+          {lockGroupName ? (
+            <>
+              Upload a CSV or Excel file — every contact in it will be added to <strong>{lockGroupName}</strong>.
+            </>
+          ) : (
+            "Upload a CSV or Excel file with your contacts."
+          )}{" "}
+          Not sure of the format?
         </p>
         <button
           type="button"
@@ -281,29 +297,42 @@ export function ImportContactsModal({ open, onClose, groups }: ImportContactsMod
                 {groups.length > 0 && (
                   <div>
                     <span className="block text-sm font-medium text-ink mb-1.5">
-                      Add to group (optional)
+                      {lockGroupId ? "Also add to another group (optional)" : "Add to group (optional)"}
                     </span>
                     <div className="flex flex-wrap gap-2">
-                      {groups.map((g) => {
-                        const active = selectedGroupIds.includes(g.id);
-                        return (
-                          <button
-                            key={g.id}
-                            type="button"
-                            onClick={() => toggleGroup(g.id)}
-                            className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${
-                              active
-                                ? "text-white border-transparent"
-                                : "text-ink-muted border-black/10 hover:bg-black/5"
-                            }`}
-                            style={active ? { backgroundColor: g.color } : undefined}
-                          >
-                            {g.name}
-                          </button>
-                        );
-                      })}
+                      {lockGroupId && (
+                        <span
+                          className="px-3 py-1.5 rounded-full text-xs font-medium text-white border border-transparent opacity-90 cursor-default"
+                          style={{ backgroundColor: groups.find((g) => g.id === lockGroupId)?.color }}
+                        >
+                          {lockGroupName} (locked)
+                        </span>
+                      )}
+                      {groups
+                        .filter((g) => g.id !== lockGroupId)
+                        .map((g) => {
+                          const active = selectedGroupIds.includes(g.id);
+                          return (
+                            <button
+                              key={g.id}
+                              type="button"
+                              onClick={() => toggleGroup(g.id)}
+                              className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${
+                                active
+                                  ? "text-white border-transparent"
+                                  : "text-ink-muted border-black/10 hover:bg-black/5"
+                              }`}
+                              style={active ? { backgroundColor: g.color } : undefined}
+                            >
+                              {g.name}
+                            </button>
+                          );
+                        })}
                     </div>
                   </div>
+                )}
+                {lockGroupId && groups.length === 0 && (
+                  <p className="text-xs text-ink-muted">Every contact in this file will be added to {lockGroupName}.</p>
                 )}
               </>
             )}

@@ -1,13 +1,14 @@
 import { useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { useContactsInGroup, useContacts, useGroup, useCustomFields } from "../hooks/useData";
+import { useContactsInGroup, useContacts, useGroup, useGroups, useCustomFields } from "../hooks/useData";
 import { PageHeader } from "../components/ui/PageHeader";
 import { Button } from "../components/ui/Button";
 import { Avatar } from "../components/ui/Avatar";
 import { EmptyState } from "../components/ui/EmptyState";
 import { Modal } from "../components/ui/Modal";
 import { Input } from "../components/ui/Input";
-import { Users, Plus, Trash, Send, X, Check, Download } from "../components/ui/icons";
+import { ImportContactsModal } from "../components/ImportContactsModal";
+import { Users, Plus, Trash, Send, X, Check, Download, Upload } from "../components/ui/icons";
 import { renameGroup, deleteGroup } from "../db/groups";
 import { addContactsToGroup, removeContactFromGroup } from "../db/contacts";
 import { exportContactsToCSV } from "../lib/exportContacts";
@@ -19,6 +20,7 @@ export function GroupDetail() {
   const navigate = useNavigate();
   const { show } = useToast();
   const group = useGroup(id);
+  const groups = useGroups();
   const members = useContactsInGroup(id);
   const allContacts = useContacts();
   const customFields = useCustomFields();
@@ -26,6 +28,7 @@ export function GroupDetail() {
   const [showRename, setShowRename] = useState(false);
   const [newName, setNewName] = useState("");
   const [showAddExisting, setShowAddExisting] = useState(false);
+  const [showImport, setShowImport] = useState(false);
   const [query, setQuery] = useState("");
   const [selectedToAdd, setSelectedToAdd] = useState<Set<string>>(new Set());
   const [adding, setAdding] = useState(false);
@@ -116,6 +119,9 @@ export function GroupDetail() {
             }}
           >
             Add contacts
+          </Button>
+          <Button size="sm" variant="outline" icon={<Upload size={14} />} onClick={() => setShowImport(true)}>
+            Import
           </Button>
           {members && members.length > 0 && (
             <Button size="sm" variant="outline" icon={<Download size={14} />} onClick={handleExport}>
@@ -240,6 +246,14 @@ export function GroupDetail() {
           })}
         </div>
       </Modal>
+
+      <ImportContactsModal
+        open={showImport}
+        onClose={() => setShowImport(false)}
+        groups={groups ?? []}
+        lockGroupId={group.id}
+        lockGroupName={group.name}
+      />
     </div>
   );
 }
